@@ -1,0 +1,35 @@
+version: '3'
+services:
+  influxdb:
+    image: influxdb
+    ports:
+    - "8083:8083"
+    - "8086:8086"
+    hostname: "influxdb"
+
+  mmqtt:
+    image: eclipse-mosquitto
+    ports:
+    - "1883:1883"
+    - "9001:9001"
+    hostname: "mqtt"
+
+  telegraf:
+    image: telegraf
+    volumes:
+      -  "$PWD/telegraf/telegraf.conf:/etc/telegraf/telegraf.conf:ro"
+    depends_on:
+      - "influxdb"
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost"]
+      interval: 1m30s
+      timeout: 10s
+      retries: 3
+
+  chronograf:
+    image: chronograf
+    environment:
+      INFLUXDB_URL: http://influxdb:8086
+      KAPACITOR_URL: http://kapacitor:9092
+    ports:
+      - "8888:8888"
